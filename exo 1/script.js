@@ -97,7 +97,7 @@ function isSame(compare, method) {
         for (i = 0; i < bigest; i++) {
             for (let same of ulIn.children) {
                 if (compare == same.firstChild.textContent) {
-                    warm.textContent = "Une tache avec ce nom existe deja !";
+                    warm.textContent = "Une tache avec ce nom existe deja. !";
                     return true;
                 };
             };
