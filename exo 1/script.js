@@ -49,6 +49,76 @@ document.body.append(ulOut);
 document.querySelector(".now").value = new Date().toISOString().substring(0, 10);
 button.addEventListener("click", createTask);
 
+let task = []
+
+function Task(text, date, status) {
+    this.text = text;
+    this.date = date;
+    this.status = status;
+};
+
+function refreshViews() {
+    const taskFromStorage = JSON.parse(localStorage.getItem('task')) ?? [];
+    console.log(taskFromStorage);
+    
+    taskFromStorage.forEach(task => {
+        const listTask = document.createElement('li');
+        listTask.style.display = "flex";
+        listTask.style.justifyContent = "space-between";
+        listTask.textContent = task.text;
+
+        // block setup date html
+        const spanDate = document.createElement("span");
+        spanDate.textContent = task.date;
+        if (new Date().toLocaleDateString('fr-FR') == task.date) {
+            spanDate.style.color = "orange";
+        } else if (new Date().getTime() >= new Date(task.date).getTime()) {
+            spanDate.style.color = "red";
+        } else {
+            spanDate.style.color = "green";
+        };
+
+        // block setup bouton html
+        const boxButton = document.createElement("div");
+        boxButton.style.display = "flex";
+        boxButton.style.gap = "1rem";
+
+        const btnModify = document.createElement("button");
+        btnModify.textContent = "Modifier";
+        btnModify.classList.add("btn", "btn-primary", "modify");
+
+        const btnEnd = document.createElement("button");
+        btnEnd.textContent = "Terminer";
+        btnEnd.classList.add("btn", "btn-green");
+
+        const btnDelete = document.createElement("button");
+        btnDelete.textContent = "Supprimer";
+        btnDelete.classList.add("btn", "btn-red");
+
+        // block ecoute de bouton
+        btnModify.addEventListener("click", modifyTask);
+        btnEnd.addEventListener("click", endTask);
+        btnDelete.addEventListener("click", deleteTask);
+
+        // block html
+        if (task.status == false) {
+            ulIn.append(listTask);
+            listTask.append(spanDate);
+            listTask.append(boxButton);
+            boxButton.append(btnModify);
+            boxButton.append(btnEnd);
+            boxButton.append(btnDelete);
+        } else {
+            ulOut.append(listTask);
+            listTask.append(spanDate);
+            listTask.append(boxButton);
+            boxButton.append(btnModify);
+            boxButton.append(btnEnd);
+            boxButton.append(btnDelete);
+        };
+    });
+};
+
 function createTask() {
     if (input.value == "") {
         return;
@@ -57,49 +127,11 @@ function createTask() {
     if (isSame(input.value)) return;
 
     warm.textContent = "";
-
-    const li = document.createElement("li");
-    li.style.display = "flex";
-    li.style.justifyContent = "space-between";
-    li.textContent = input.value;
-
-    const spanDate = document.createElement("span");
-    spanDate.textContent = new Date(inputDate.value).toLocaleDateString('fr-FR');
-    if (new Date().toLocaleDateString('fr-FR') == new Date(inputDate.value).toLocaleDateString('fr-FR')) {
-        spanDate.style.color = "orange"
-    } else if (new Date().getTime() >= new Date(inputDate.value).getTime()) {
-        spanDate.style.color = "red"
-    } else {
-        spanDate.style.color = "green"
-    }
-
-    const boxButton = document.createElement("div");
-    boxButton.style.display = "flex";
-    boxButton.style.gap = "1rem";
-
-    const btnModify = document.createElement("button");
-    btnModify.textContent = "Modifier";
-    btnModify.classList.add("btn", "btn-primary", "modify");
-
-    const btnEnd = document.createElement("button");
-    btnEnd.textContent = "Terminer";
-    btnEnd.classList.add("btn", "btn-green");
-
-    const btnDelete = document.createElement("button");
-    btnDelete.textContent = "Supprimer";
-    btnDelete.classList.add("btn", "btn-red");
+    task.push(new Task(input.value, new Date(inputDate.value).toLocaleDateString('fr-FR'), false))
+    localStorage.setItem('task', JSON.stringify(task))
 
     input.value = "";
-    btnModify.addEventListener("click", modifyTask);
-    btnEnd.addEventListener("click", endTask);
-    btnDelete.addEventListener("click", deleteTask);
-
-    ulIn.append(li);
-    li.append(spanDate);
-    li.append(boxButton);
-    boxButton.append(btnModify);
-    boxButton.append(btnEnd);
-    boxButton.append(btnDelete);
+    refreshViews()
 };
 
 function isSame(compare, method) {
@@ -194,3 +226,5 @@ function endTask(event) {
 function deleteTask() {
     this.closest("li").remove();
 };
+
+refreshViews()
