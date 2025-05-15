@@ -49,8 +49,6 @@ document.body.append(ulOut);
 document.querySelector(".now").value = new Date().toISOString().substring(0, 10);
 button.addEventListener("click", createTask);
 
-let task = []
-
 function Task(text, date, status) {
     this.text = text;
     this.date = date;
@@ -59,13 +57,15 @@ function Task(text, date, status) {
 
 function refreshViews() {
     const taskFromStorage = JSON.parse(localStorage.getItem('task')) ?? [];
-    console.log(taskFromStorage);
+    ulIn.innerHTML = '';
+    ulOut.innerHTML = '';
     
-    taskFromStorage.forEach(task => {
+    taskFromStorage.forEach((task, index) => {
         const listTask = document.createElement('li');
         listTask.style.display = "flex";
         listTask.style.justifyContent = "space-between";
         listTask.textContent = task.text;
+        listTask.dataset.index = index;
 
         // block setup date html
         const spanDate = document.createElement("span");
@@ -120,15 +120,14 @@ function refreshViews() {
 };
 
 function createTask() {
-    if (input.value == "") {
-        return;
-    };
+    let taskFromStorage = JSON.parse(localStorage.getItem('task')) ?? [];
 
+    if (input.value === "") return;
     if (isSame(input.value)) return;
 
     warm.textContent = "";
-    task.push(new Task(input.value, new Date(inputDate.value).toLocaleDateString('fr-FR'), false))
-    localStorage.setItem('task', JSON.stringify(task))
+    taskFromStorage.push(new Task(input.value, new Date(inputDate.value).toLocaleDateString('fr-FR'), false))
+    localStorage.setItem('task', JSON.stringify(taskFromStorage))
 
     input.value = "";
     refreshViews()
@@ -187,44 +186,49 @@ function isSame(compare, method) {
     return false;
 };
 
-function modifyTask(event) {
-    let btn = event.target;
-    btn.textContent = "Valider"
-    let li = this.closest("li");
-    let input = document.createElement("input");
-    input.value = li.firstChild.textContent;
-    li.replaceChild(input, li.firstChild);
-    btn.replaceWith(btn.cloneNode(true));
-    let newBtn = li.querySelector(".modify");
-    newBtn.addEventListener("click", function() {
-        if (isSame(input.value, "alert-modify")) return;
-        let span = document.createElement("span");
-        li.replaceChild(span, input);
-        span.textContent = input.value;
-        newBtn.textContent = "Modifier";
-        newBtn.replaceWith(newBtn.cloneNode(true));
-        const resetBtn = li.querySelector(".modify");
-        resetBtn.addEventListener("click", modifyTask);
-    });
-};
+function modifyTask() {
+    const li = this.closest("li");
+    const index = li.dataset.index;
+    const taskFromStorage = JSON.parse(localStorage.getItem('task')) ?? [];
 
-function endTask(event) {
-    
-    if (this.closest("ul").classList.contains("in")) {
-        if (isSame(this.closest("li").firstChild.textContent, "alert")) return;
-        this.classList.replace("btn-green", "btn-yellow");
-        event.target.textContent = "En cours";
-        ulOut.append(this.closest("li"));
-    } else {
-        if (isSame(this.closest("li").firstChild.textContent, "")) return;
-        this.classList.replace("btn-yellow", "btn-green");
-        event.target.textContent = "Terminer";
-        ulIn.append(this.closest("li"));
+    const inputField = document.createElement("input");
+    inputField.value = li.firstChild.textContent;
+    li.replaceChild(inputField, li.firstChild);
+
+    const btn = this;
+    btn.textContent = "Valider"
+    btn.onclick = () => {
+        if (isSame(inputField.value, "alert-modify")) return;
+        taskFromStorage[index].text = inputField.value;
+        localStorage.setItem('task', JSON.stringify(taskFromStorage));
+
+        const span = document.createElement("span");
+        span.textContent = inputField.value;
+        li.replaceChild(span, inputField);
+
+        btn.textContent = "Modifier";
+        btn.onclick = modifyTask;
     };
 };
 
+function endTask() {
+    const li = this.closest("li");
+    const index = li.dataset.index;
+    const taskFromStorage = JSON.parse(localStorage.getItem('task')) ?? [];
+
+    taskFromStorage[index].status = !taskFromStorage[index].status;
+    localStorage.setItem('task', JSON.stringify(taskFromStorage));
+    refreshViews();
+};
+
 function deleteTask() {
-    this.closest("li").remove();
+    const li = this.closest("li");
+    const index = li.dataset.index;
+    let taskFromStorage = JSON.parse(localStorage.getItem('task')) ?? [];
+
+    taskFromStorage.splice(index, 1);
+    localStorage.setItem('task', JSON.stringify(taskFromStorage));
+    refreshViews();
 };
 
 refreshViews()
